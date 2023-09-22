@@ -12,7 +12,6 @@ from langchain.prompts.chat import (
 from langchain.schema import HumanMessage, SystemMessage
 
 if "chat_history" not in st.session_state:
-    # chat history used for display
     st.session_state["chat_history"] = []
 
 st.title("Create learning progressions")
@@ -110,7 +109,10 @@ if st.session_state["should_do_first_chat"]:
 
         traceback.print_exc()
         st.write("Failed to load ouput. Check raw response")
-    st.session_state["chat_history"].append(("Done!", False))
+    # streamlit seems to have a bug where chat_history is missing?
+    # how is it possible to get here without chat_history being initialized?
+    chat_history = st.session_state.get("chat_history", [])
+    chat_history.append(("Done!", False))
 
 
 system_message_prompt = SystemMessagePromptTemplate.from_template(
