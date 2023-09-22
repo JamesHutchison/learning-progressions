@@ -1,0 +1,32 @@
+[tool.ruff]
+# hard limit, error here
+line-length = 120
+
+[tool.black]
+# soft limit, wrap just before 100 chars
+line-length = 98
+
+[tool.poetry]
+name = "learning-progressions"
+version = "0.1.0"
+description = ""
+authors = ["James Hutchison <122519877+JamesHutchison@users.noreply.github.com>"]
+readme = "README.md"
+
+[tool.poetry.dependencies]
+python = "^3.11"
+streamlit = "^1.27.0"
+langchain = "^0.0.299"
+streamlit-chat = "^0.1.1"
+openai = "^0.28.0"
+
+
+[tool.poetry.group.dev.dependencies]
+mypy = "^1.5.1"
+ruff = "^0.0.290"
+black = "^23.9.1"
+pytest = "^7.4.2"
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"
