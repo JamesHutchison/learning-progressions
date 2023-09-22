@@ -1,4 +1,5 @@
 import json
+from pathlib import Path
 
 import streamlit as st
 import streamlit_chat as st_chat
@@ -16,7 +17,35 @@ if "chat_history" not in st.session_state:
 
 st.title("Create learning progressions")
 
-api_key = st.sidebar.text_input("OpenAI API Key", key="open_ai_key", type="password").strip()
+
+@st.cache_data
+def get_api_key() -> str:
+    api_key_path = Path(".api_key")
+    if api_key_path.exists():
+        incoming_api_key = api_key_path.read_text().strip()
+    else:
+        incoming_api_key = ""
+    return incoming_api_key
+
+
+def api_key_change():
+    if len(st.session_state["open_ai_key"]) == 51:
+        st.session_state["valid_api_key"] = True
+    else:
+        st.session_state["valid_api_key"] = False
+
+
+api_key = st.sidebar.text_input(
+    "OpenAI API Key",
+    key="open_ai_key",
+    type="password",
+    value=get_api_key(),
+    max_chars=51,
+    on_change=api_key_change,
+).strip()
+
+
+st.session_state["valid_api_key"] = len(st.session_state["open_ai_key"]) == 51
 
 standard = st.text_input(
     "Create learning progressions for this standard", key="standard", max_chars=200
@@ -29,6 +58,11 @@ more_info = st.text_area(
     height=200,
 )
 chat_response = None
+
+if not st.session_state.get("valid_api_key", False):
+    st.write(
+        ":red[API Key missing. Add it on the left sidebar. On mobile expand it on the top left]"
+    )
 
 
 # feels janky but without this the "start" button doesn't disable / hide properly
@@ -87,18 +121,24 @@ first_prompt_template = (
     "We will create a learning progression for the standard: {standard}\n"
     "Additional information to consider: {more_info}\n"
     "First, reason through the concepts and skills based on the standard. "
-    "Concepts should be sentences, not single words. "
+    "For only this step, concepts and skills should be sentences, not single words. "
     "Avoid concepts and skills that make no sense without further context. "
+    "These are concepts and skills students would be formally taught. "
+    "An example of a bad concept is 'math'. An example of a bad skill is 'learning', 'determining', 'explaining'. "
+    "If a skill is teachable as a single word, then exclude it. "
     "After reasoning, produce the list of concepts and skills. Keep this list concise. "
     "Then, create a learning progression. The learning progression "
     "is a list of concepts and skills that progressively drive the student towards the learning "
     "goals. List these in increasing complexity. The easier learnings should be a foundation for the later ones. "
+    "Steps in the learning progression should not be the same as a prior one. "
     "Next, take the role of a school principal and criticize the concepts, skills, and learning progression. "
     "Evaluate whether our earlier rules are clearly being followed. Suggest changes. Ensure ambiguous statements, "
-    "are expanded upon. This should be defined such that someone with little experience can understand what it means. "
+    "are expanded upon. Suggest deletions for duplicates. "
+    "This should be defined such that someone with little experience can understand what it means. "
     "After that is generated, create a final version of the list of concepts and skills as well "
     "as the learning progression. Produce a correct JSON object with the keys "
-    "'concepts_and_skills' and 'learning_progression'"
+    "'concepts_and_skills' and 'learning_progression'. The concepts and skills should be a list of size 2. The first "
+    "item is the concept or skill, which is a noun or verb. The second item is why it is relevant."
 )
 prompt_template_expander = st.expander("prompt template")
 with prompt_template_expander:
@@ -106,7 +146,7 @@ with prompt_template_expander:
         "prompt template", first_prompt_template, height=200, label_visibility="hidden"
     )
 
-if not st.session_state.get("hide_start_button", False):
+if not st.session_state.get("hide_start_button", False) and st.session_state["valid_api_key"]:
     start_pressed = st.button("Start", key="started")
     if start_pressed and standard:
         st.session_state["hide_start_button"] = True
