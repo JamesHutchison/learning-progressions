@@ -48,11 +48,13 @@ api_key = st.sidebar.text_input(
 st.session_state["valid_api_key"] = len(st.session_state["open_ai_key"]) == 51
 
 standard = st.text_input(
-    "Create learning progressions for this standard", key="standard", max_chars=200
+    "Create learning progressions for this standard. DO NOT ASSUME THE AI KNOWS WHAT THE CODES ARE. EXPLAIN THEM.",
+    key="standard",
+    max_chars=200,
 )
 
 more_info = st.text_area(
-    "More information and context for the AI to consider",
+    "More information and context for the AI to consider.",
     key="more_info",
     max_chars=2000,
     height=200,
